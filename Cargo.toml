@@ -4,10 +4,14 @@ version = "0.1.0"
 edition = "2018"
 authors = ["aoki <blz.soft@outlook.jp>"]
 repository = "https://github.com/blz-soft/happy_server"
-license = "MIT"
 license-file = "LICENSE"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+japanese = []
+english = []
 
 [dependencies]
 # webserver
