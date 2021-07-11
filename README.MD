@@ -9,6 +9,8 @@ This software is written under the [MIT license](https://github.com/blz-soft/hap
 
 ### Build
 
+It needs to be connected to Rust's tool chain and to the Internet.
+
 1. Download the source code from this repository.  
 
 2. Start the build by executing the following command in the root directory of the repository.
