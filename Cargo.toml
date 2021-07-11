@@ -10,11 +10,18 @@ license-file = "LICENSE"
 
 [features]
 default = []
+
+# language default
 japanese = []
 english = []
+
+# cli color default
+no_color = []
 
 [dependencies]
 # webserver
 actix-web = "3"
 # static file webserver
 actix-files = "0.5.0" 
+# Add color to console output
+colored = "2"
