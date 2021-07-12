@@ -1,0 +1,40 @@
+name: Rust
+
+on: [push]
+
+jobs:
+  ubunutu_build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - name: Build
+      run: cargo build --release
+    - uses: actions/upload-artifact@v1 
+      with:
+        name: happy_server
+        path: target/release/happy_server
+
+  windows_build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - name: Build
+      run: cargo build --release
+    - uses: actions/upload-artifact@v1 
+      with:
+        name: happy_server.exe
+        path: target/release/happy_server.exe
