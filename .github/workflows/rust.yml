@@ -44,7 +44,7 @@ jobs:
 
 
 
-  ubunutu_build:
+  ubuntu_build:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v1
@@ -84,6 +84,45 @@ jobs:
         path: artifacts/
 
 
+  ubuntu_18_build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - name: make_artifacts_folder
+      run: mkdir artifacts
+
+    - name: Build_no_color
+      run: cargo build --release --features no_color
+    - name: copy_artifacts
+      run: cp target/release/happy_server artifacts/hs_no_color
+
+    - name: Build_english
+      run: cargo build --release --features english
+    - name: copy_artifacts
+      run: cp target/release/happy_server artifacts/hs_english
+
+    - name: Build_english_no_color
+      run: cargo build --release --features english --features no_color
+    - name: copy_artifacts
+      run: cp target/release/happy_server artifacts/hs_english_no_color
+
+    - name: Build_defalut
+      run: cargo build --release
+    - name: copy_artifacts
+      run: cp target/release/happy_server artifacts/happy_server
+
+    - uses: actions/upload-artifact@v1 
+      with:
+        name: Ubuntu 18.04
+        path: artifacts/
+
 
   mac10_build:
     runs-on: macos-latest
@@ -119,53 +158,7 @@ jobs:
     - name: copy_artifacts
       run: cp target/release/happy_server artifacts/happy_server
 
-    - name: Build_defalut
-      run: cargo build --release
-    - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/happy_server
-
     - uses: actions/upload-artifact@v1 
       with:
         name: macOS Catalina 10.15
-        path: artifacts/
-
-
-
-  mac_big_build:
-    runs-on: macos-11
-    steps:
-    - uses: actions/checkout@v1
-    - uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    - name: make_artifacts_folder
-      run: mkdir artifacts
-
-    - name: Build_no_color
-      run: cargo build --release --features no_color
-    - name: copy_artifacts
-      run: cp target/release/happy_server artifacts/hs_no_color
-
-    - name: Build_english
-      run: cargo build --release --features english
-    - name: copy_artifacts
-      run: cp target/release/happy_server artifacts/hs_english
-
-    - name: Build_english_no_color
-      run: cargo build --release --features english --features no_color
-    - name: copy_artifacts
-      run: cp target/release/happy_server artifacts/hs_english_no_color
-
-    - name: Build_defalut
-      run: cargo build --release
-    - name: copy_artifacts
-      run: cp target/release/happy_server artifacts/happy_server
-
-    - uses: actions/upload-artifact@v1 
-      with:
-        name: macOS Big Sur 11
         path: artifacts/
