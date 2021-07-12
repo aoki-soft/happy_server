@@ -61,22 +61,22 @@ jobs:
     - name: Build_no_color
       run: cargo build --release --features no_color
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/hs_no_color
+      run: cp target/release/happy_server artifacts/hs_no_color
 
     - name: Build_english
       run: cargo build --release --features english
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/hs_english
+      run: cp target/release/happy_server artifacts/hs_english
 
     - name: Build_english_no_color
       run: cargo build --release --features english --features no_color
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/hs_english_no_color
+      run: cp target/release/happy_server artifacts/hs_english_no_color
 
     - name: Build_defalut
       run: cargo build --release
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/happy_server
+      run: cp target/release/happy_server artifacts/happy_server
 
     - uses: actions/upload-artifact@v1 
       with:
@@ -102,17 +102,22 @@ jobs:
     - name: Build_no_color
       run: cargo build --release --features no_color
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/hs_no_color
+      run: cp target/release/happy_server artifacts/hs_no_color
 
     - name: Build_english
       run: cargo build --release --features english
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/hs_english
+      run: cp target/release/happy_server artifacts/hs_english
 
     - name: Build_english_no_color
       run: cargo build --release --features english --features no_color
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/hs_english_no_color
+      run: cp target/release/happy_server artifacts/hs_english_no_color
+
+    - name: Build_defalut
+      run: cargo build --release
+    - name: copy_artifacts
+      run: cp target/release/happy_server artifacts/happy_server
 
     - name: Build_defalut
       run: cargo build --release
@@ -143,22 +148,22 @@ jobs:
     - name: Build_no_color
       run: cargo build --release --features no_color
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/hs_no_color
+      run: cp target/release/happy_server artifacts/hs_no_color
 
     - name: Build_english
       run: cargo build --release --features english
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/hs_english
+      run: cp target/release/happy_server artifacts/hs_english
 
     - name: Build_english_no_color
       run: cargo build --release --features english --features no_color
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/hs_english_no_color
+      run: cp target/release/happy_server artifacts/hs_english_no_color
 
     - name: Build_defalut
       run: cargo build --release
     - name: copy_artifacts
-      run: copy target/release/happy_server artifacts/happy_server
+      run: cp target/release/happy_server artifacts/happy_server
 
     - uses: actions/upload-artifact@v1 
       with:
