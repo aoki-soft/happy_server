@@ -39,7 +39,8 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: make_artifacts_folder
-      run: mkdir rtifacts
+      run: mkdir artifacts
+      
     - name: Build_no_color
       run: cargo build --release --features no_color
     - name: copy_artifacts
