@@ -18,8 +18,8 @@ jobs:
       run: cargo build --release --features no_color
     - name: Build_english
       run: cargo build --release --features no_color
-    - name: Build_english
-      run: cargo build --release --features no_color --features english
+    - name: Build_english_no_color
+      run: cargo build --release --features english --features no_color
     - name: Build_defalut
       run: cargo build --release
     - uses: actions/upload-artifact@v1 
@@ -38,15 +38,27 @@ jobs:
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - name: make_artifacts_folder
+      run: mkdir %homepath%\artifacts
     - name: Build_no_color
       run: cargo build --release --features no_color
+    - name: copy_artifacts
+      run: copy target\release\happy_server.exe %homepath%\artifacts\hs_no_color.exe
+
     - name: Build_english
-      run: cargo build --release --features no_color
-    - name: Build_english
-      run: cargo build --release --features no_color --features english
+      run: cargo build --release --features english
+    - name: copy_artifacts
+      run: copy target\release\happy_server.exe %homepath%\artifacts\hs_english.exe
+
+    - name: Build_english_no_color
+      run: cargo build --release --features english --features no_color
+    - name: copy_artifacts
+      run: copy target\release\happy_server.exe %homepath%\artifacts\hs_english_no_color.exe
+
     - name: Build_defalut
       run: cargo build --release
+
     - uses: actions/upload-artifact@v1 
       with:
-        name: happy_server.exe
-        path: target/release/happy_server.exe
+        name: windows
+        path: ~/artifacts/
