@@ -3,19 +3,21 @@
 
 use actix_files;
 use actix_web::{App, HttpServer, dev::Server};
-pub struct HappyServer(pub std::io::Result<Server>);
+use std::net::SocketAddrV4;
+
+pub struct HappyServer(pub std::io::Result<Server>, pub SocketAddrV4);
 impl HappyServer {
     /// # start web server
     /// # Returns
     /// * webserver handler or err
-    async fn start_server() -> std::io::Result<Server> {
+    async fn start_server(socket_addr: &SocketAddrV4) -> std::io::Result<Server> {
         Ok(HttpServer::new(|| {
             App::new().service(actix_files::Files::new("/", ".").show_files_listing())
         })
-        .bind("0.0.0.0:80")?
+        .bind(&socket_addr)?
         .run())
     }
-    pub async fn start() -> Self {
-        HappyServer(HappyServer::start_server().await)
+    pub async fn start(socket_addr: SocketAddrV4) -> Self {
+        HappyServer(HappyServer::start_server(&socket_addr).await, socket_addr)
     }
 }

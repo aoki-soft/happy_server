@@ -7,6 +7,7 @@ use actix_web::dev::Server;
 // Add color to console output
 use colored::*;
 use server_core::HappyServer;
+use std::net::{Ipv4Addr, SocketAddrV4};
 
 // Compile-time defaults
 #[cfg(any(feature = "japanese",not(feature = "english")))]
@@ -19,9 +20,14 @@ const COMPILE_TIME_DEFAULT_COLOR: bool = true;
 #[cfg(feature = "no_color")]
 const COMPILE_TIME_DEFAULT_COLOR: bool = false;
 
-// TODO
-// const DEFAULT_HTTP_PORT: u16 = 80;
+const DEFAULT_IPV4_ADDR: Ipv4Addr  = Ipv4Addr::new(0, 0, 0, 0);
+const DEFAULT_HTTP_PORT: u16  = 80;
+// const DEFAULT_PROTOCOL: Protocol<()> = Protocol::Http(());
 
+// enum Protocol<T> {
+//     Http(T),
+//     // Https(T)
+// }
 
 /// Language settings
 #[allow(dead_code)]
@@ -93,13 +99,18 @@ impl CliViewer {
             Ok(web_server) => {
                 // Output when the web server is successfully started.
                 // case of cli
+                let url = match server.1.port() {
+                    DEFAULT_HTTP_PORT => format!("http://localhost"),
+                    num => format!("http://localhost:{}",num)
+                };
+
                 let output_message = match self.language{
                     Language::Japanese => format!("{running}: カレントディレクトリをhttpで配信しています。\n\
-                    http://localhost にアクセスすればブラウズができます。\n\n\
-                    終了する場合は、Ctrl + C を押すか、このウィンドを閉じてください。", running=self.style.running),
+                    {url} にアクセスすればブラウズができます。\n\n\
+                    終了する場合は、Ctrl + C を押すか、このウィンドを閉じてください。", url=url, running=self.style.running),
                     Language::English => format!("{running}: The current directory is served by http!!\n\
-                    You can browse by visiting http://localhost. \n\n\
-                    To exit, press Ctrl + C or close this window.", running=self.style.running)
+                    You can browse by visiting {url}. \n\n\
+                    To exit, press Ctrl + C or close this window.",url=url, running=self.style.running)
                 };
                 println!("{}", output_message);
 
@@ -114,19 +125,22 @@ impl CliViewer {
 /// Note: Although it is an async function, it is converted to a normal function signature by the #[actix_web::main] attribute.
 #[actix_web::main]
 async fn main() -> io::Result<()> {
+    // get default settings
     // language setting
     let language = COMPILE_TIME_DEFAULT_LANGUAGE;
     // cli color setting  ex) true = colored , false = no_colored
     let cli_color = COMPILE_TIME_DEFAULT_COLOR;
-
-    // TODO: get config
-
     // cli style strings
     let style = if cli_color {
         StyledString::colored()
     } else {
         StyledString::no_colored()
     };
+
+    let ipv4_addr = DEFAULT_IPV4_ADDR;
+    let port = DEFAULT_HTTP_PORT;
+
+
 
     // viewer setup
     let viewer = Viewer::Cli(CliViewer{language, style});
@@ -140,8 +154,10 @@ async fn main() -> io::Result<()> {
     // TODO: setup web_server
     // TODO: output result of setup web_server
 
+    let socket_addr = SocketAddrV4::new(ipv4_addr, port);
+
     // start web server
-    let web_server = HappyServer::start().await;
+    let web_server = HappyServer::start(socket_addr).await;
     // Output the result of the Happy Server startup.
     let web_server = viewer.output_reslut(web_server);
 
