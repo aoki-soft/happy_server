@@ -3,15 +3,38 @@ name: Rust
 on: [push]
 
 jobs:
-  build:
-
+  ubunutu_build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v1
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: Build
       run: cargo build --verbose --release
     - uses: actions/upload-artifact@v1 
       with:
         name: happy_server
-        path: target/release/happy_server
+        path: target/release/happy_serve
+
+  windows_build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - name: Build
+      run: cargo build --verbose --release
+    - uses: actions/upload-artifact@v1 
+      with:
+        name: happy_server
+        path: target/release/happy_serve
