@@ -1,0 +1,17 @@
+name: Rust
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build
+      run: cargo build --verbose --release
+    - uses: actions/upload-artifact@v1 
+      with:
+        name: happy_server
+        path: target/release/happy_server
