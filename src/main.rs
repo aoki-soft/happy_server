@@ -212,4 +212,9 @@ mod test {
 
         assert_eq!(res, *test_file_text.as_bytes());
     }
+
+    #[test]
+    fn test_for_test(){
+        // ok
+    }
 }
