@@ -198,7 +198,7 @@ mod test {
 
     #[actix_web::main]
     async fn test_request(test_file_text: Arc<String>) {
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(10000));
 
         // request
         let client = Client::default();
