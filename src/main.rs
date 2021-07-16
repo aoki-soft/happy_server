@@ -168,6 +168,7 @@ async fn main() -> io::Result<()> {
 #[cfg(test)]
 mod test {
     use actix_web::client::Client;
+    use std::path::PathBuf;
     use std::thread;
     use std::time::Duration;
     use std::sync::Arc;
@@ -186,32 +187,42 @@ mod test {
         test_file.write(test_file_text.as_bytes()).unwrap();
 
 
-        let _main_handle = thread::spawn(|| {
+        let main_handle = thread::spawn(|| {
             let _ = super::main();
         });
 
-        let test_handle = thread::spawn(|| {test_request(test_file_text)});
+        let test_handle = thread::spawn(|| {test_request(test_file_text, test_file_path)});
         test_handle.join().unwrap();
-
-        std::fs::remove_file(test_file_path).unwrap();
-    }
-
-    #[actix_web::main]
-    async fn test_request(test_file_text: Arc<String>) {
-        thread::sleep(Duration::from_millis(10));
-
-        // request
-        let client = Client::default();
-        let mut res = client.get("http://localhost/test_file.txt") // <- Create request builder
-            .header("User-Agent", "Actix-web")
-            .send()                             // <- Send http request
-            .await.unwrap();
+        main_handle.join().unwrap();
         
-        let res = res.body();
-        let res = res.await.unwrap();
-
-        assert_eq!(res, *test_file_text.as_bytes());
     }
+
+    // #[actix_web::main]
+    // async fn test_request(test_file_text: Arc<String>, test_file_path: PathBuf) {
+    //     thread::sleep(Duration::from_millis(10000));
+
+    //     // request
+    //     let client = Client::default();
+    //     let mut res = client.get("http://localhost/test_file.txt") // <- Create request builder
+    //         .header("User-Agent", "Actix-web")
+    //         .send()                             // <- Send http request
+    //         .await.unwrap();
+        
+    //     let res = res.body();
+    //     let res = res.await.unwrap();
+
+    //     assert_eq!(res, *test_file_text.as_bytes());
+    //     std::fs::remove_file(test_file_path).unwrap();
+    //     std::process::exit(0);
+    // }
+
+    // #[actix_web::test]
+    // async fn test_index_ok() {
+    //     let req = test::TestRequest::with_header("content-type", "text/plain").to_http_request();
+    //     let resp = index(req).await;
+    //     assert_eq!(resp.status(), http::StatusCode::OK);
+    // }
+
 
     #[test]
     fn test_for_test(){
