@@ -16,11 +16,6 @@ const COMPILE_TIME_DEFAULT_LANGUAGE:Language = Language::Japanese;
 #[cfg(feature = "english")]
 const COMPILE_TIME_DEFAULT_LANGUAGE:Language = Language::English;
 
-#[cfg(not(feature = "no_color"))]
-const COMPILE_TIME_DEFAULT_COLOR: bool = true;
-#[cfg(feature = "no_color")]
-const COMPILE_TIME_DEFAULT_COLOR: bool = false;
-
 const DEFAULT_IPV4_ADDR: Ipv4Addr  = Ipv4Addr::new(0, 0, 0, 0);
 const DEFAULT_HTTP_PORT: u16  = 80;
 
@@ -42,19 +37,13 @@ async fn main() {
     // get default settings
     // language setting
     let language = COMPILE_TIME_DEFAULT_LANGUAGE;
-    // cli color setting  ex) true = colored , false = no_colored
-    let cli_color = COMPILE_TIME_DEFAULT_COLOR;
-    // cli style strings
-    let style = if cli_color {
-        StyledString::colored()
-    } else {
-        StyledString::no_colored()
-    };
 
     // setup cli arguments getter
     let cli_arg_getter = controller::CliArgGetter{language};
     // get cli arguments
-    let (language, happy_server_model) = cli_arg_getter.get_arguments();
+    let (language, color, happy_server_model) = cli_arg_getter.get_arguments();
+    // setup cli style strings
+    let style = if color {StyledString::colored()} else {StyledString::no_colored()};
     // setup app viewer
     let mut viewer = StreamViewer{language, style, writer: std::io::stdout()};
     // convert model to server builder, then output with viewer

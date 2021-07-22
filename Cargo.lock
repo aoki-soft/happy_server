@@ -793,7 +793,7 @@ dependencies = [
 
 [[package]]
 name = "happy_server"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "actix-files",
  "actix-rt 2.2.0",
