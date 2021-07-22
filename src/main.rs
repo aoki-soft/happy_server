@@ -16,13 +16,6 @@ const COMPILE_TIME_DEFAULT_LANGUAGE:Language = Language::Japanese;
 #[cfg(feature = "english")]
 const COMPILE_TIME_DEFAULT_LANGUAGE:Language = Language::English;
 
-const DEFAULT_IPV4_ADDR: Ipv4Addr  = Ipv4Addr::new(0, 0, 0, 0);
-const DEFAULT_HTTP_PORT: u16  = 80;
-
-pub enum Mode {
-    Http(server_core::HappyServerBuilder),
-}
-
 /// Language settings
 #[allow(dead_code)]
 pub enum Language {

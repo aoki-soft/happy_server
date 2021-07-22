@@ -8,9 +8,13 @@ use super::server_core::HappyServerBuilder;
 // Add color to console output
 use colored::*;
 
+use std::num::ParseIntError;
 use std::result::Result;
 use std::io::Write;
 use std::io;
+
+const DEFAULT_IPV4_ADDR: Ipv4Addr  = Ipv4Addr::new(0, 0, 0, 0);
+const DEFAULT_HTTP_PORT: u16  = 80;
 
 #[allow(dead_code)]
 pub struct StyledString {
@@ -60,7 +64,6 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
             },
             Ok(server) => {
                 // Output when the web server is successfully started.
-                // case of cli
                 let url = match hs_builder.socket_addr.port() {
                     DEFAULT_HTTP_PORT => format!("http://localhost"),
                     num => format!("http://localhost:{}",num)
@@ -95,79 +98,47 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
 }
 
 impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
-    fn to_happy_server_builder(&mut self, model: model::HappyServerModel) -> io::Result<Result<HappyServerBuilder, String>> {
-        match self.language {
-            Language::Japanese => {
-                // port convert string to u16
-                let socketaddr: std::result::Result<u16, String> = match model.port {
-                    Some(p) => match p.parse() {
-                        Ok(p) => Ok(u16::into(p)),
-                        Err(_) => Err(format!("{error}: コマンドライン引数のポート番号に、数値以外が入っていました。\n\
+    fn to_happy_server_builder(&mut self, port: Result<u16, ParseIntError>) -> io::Result<Result<HappyServerBuilder, String>> {
+        // port convert string to u16
+        let port: Result<u16, String> = match port {
+            Ok(p) => Ok(p),
+            Err(_) => Err(
+                match self.language {
+                    Language::Japanese => format!("\
+                        {error}: コマンドライン引数のポート番号に、数値以外が入っていました。\n\
                         {note}: 引数には0~65535までの数値を入れることができます。\n\
-                        {note}: 引数を入れなければ、デフォルトポート: {defalut_port}が利用します。\n"
-                        , error=self.style.error, note=self.style.note, defalut_port=DEFAULT_HTTP_PORT))
-                    },
-                    None => Ok(u16::into(DEFAULT_HTTP_PORT))
-                };
-                let mut error_output = None;
-                let port = match socketaddr {
-                    Ok(p) => Some(p),
-                    Err(e) => {
-                        error_output = match error_output {
-                            Some(previous) => Some(format!("{}\n{}", previous, e)),
-                            None => Some(e)
-                        };
-                        None
-                    }
-                };
-                match error_output {
-                    Some(e) => {
-                        self.writer.write_all(e.as_bytes())?;
-                        Ok(Err(e))
-                    },
-                    None => {
-                        // output error if there is error
-                        Ok(Ok(HappyServerBuilder{
-                            socket_addr: std::net::SocketAddrV4::new(DEFAULT_IPV4_ADDR, port.unwrap())
-                        }))
-                    }
-                }
-            },
-            Language::English => {
-                // port convert string to u16
-                let socketaddr: std::result::Result<u16, String> = match model.port {
-                    Some(p) => match p.parse() {
-                        Ok(p) => Ok(u16::into(p)),
-                        Err(_) => Err(format!("{error}: The port number in the command line argument contained a non-numeric value.\n\
+                        {note}: オプションを入れなければ、{defalut_port}番ポートを使用します。\n"
+                        , error=self.style.error, note=self.style.note, defalut_port=DEFAULT_HTTP_PORT),
+                    Language::English => format!("\
+                        {error}: The port number in the command line argument contained a non-numeric value.\n\
                         {note}: The argument can be any number between 0 and 65535.\n\
-                        {note}: If no argument is given, the default port: {defalut_port} will be used.\n", error=self.style.error, note=self.style.note, defalut_port=DEFAULT_HTTP_PORT))
-                    },
-                    None => Ok(u16::into(DEFAULT_HTTP_PORT))
-                };
-                let mut error_output = None;
-                let port = match socketaddr {
-                    Ok(p) => Some(p),
-                    Err(e) => {
-                        error_output = match error_output {
-                            Some(previous) => Some(format!("{}\n{}", previous, e)),
-                            None => Some(e)
-                        };
-                        None
-                    }
-                };
-                
-                match error_output {
-                    Some(e) => {
-                        self.writer.write_all(e.as_bytes())?;
-                        Ok(Err(e))
-                    },
-                    None => {
-                        // output error if there is error
-                        Ok(Ok(HappyServerBuilder{
-                            socket_addr: std::net::SocketAddrV4::new(DEFAULT_IPV4_ADDR, port.unwrap())
-                        }))
-                    }
+                        {note}: If no argument is given, the default port: {defalut_port} will be used.\n"
+                        , error=self.style.error, note=self.style.note, defalut_port=DEFAULT_HTTP_PORT)
                 }
+            )
+        };
+
+        let mut error_output = None;
+        let port = match port {
+            Ok(p) => Some(p),
+            Err(e) => {
+                error_output = match error_output {
+                    Some(previous) => Some(format!("{}\n{}", previous, e)),
+                    None => Some(e)
+                };
+                None
+            }
+        };
+
+        match error_output {
+            Some(e) => {
+                self.writer.write_all(e.as_bytes())?;
+                Ok(Err(e))
+            },
+            None => {
+                Ok(Ok(HappyServerBuilder{
+                    socket_addr: std::net::SocketAddrV4::new(DEFAULT_IPV4_ADDR, port.unwrap())
+                }))
             }
         }
     }
