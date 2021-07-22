@@ -13,6 +13,7 @@ use std::result::Result;
 use std::io::Write;
 use std::io;
 
+
 const DEFAULT_IPV4_ADDR: Ipv4Addr  = Ipv4Addr::new(0, 0, 0, 0);
 const DEFAULT_HTTP_PORT: u16  = 80;
 
@@ -21,7 +22,8 @@ pub struct StyledString {
     pub error: String,
     pub note: String,
     pub running: String,
-    pub finish: String
+    pub finish: String,
+    pub copied: String,
 } 
 
 impl StyledString {
@@ -31,6 +33,7 @@ impl StyledString {
             note: "Note".blue().bold().to_string(),
             running: "Running".green().bold().to_string(),
             finish: "Finish".green().bold().to_string(),
+            copied: "Copied".green().bold().to_string(),
         }
     }
     pub fn no_colored() -> Self {
@@ -39,6 +42,7 @@ impl StyledString {
             note: "Note".to_string(),
             running: "Running".to_string(),
             finish: "Finish".to_string(),
+            copied: "Copied".green().bold().to_string(),
         }
     }
 }
@@ -48,7 +52,35 @@ pub struct StreamViewer<T: Write>{
     pub language: Language,
     pub style: StyledString,
     pub writer: T,
+    pub clipbood: Option<bool>,
 }
+
+#[cfg(not(feature="no_clipboard"))]
+fn set_clipboard(set_string: String) -> Result<(), Box<dyn std::error::Error>> {
+    use clipboard::ClipboardContext;
+    use clipboard::ClipboardProvider;
+    let mut ctx: ClipboardContext = ClipboardProvider::new()?;
+    ctx.set_contents(set_string)
+}
+#[cfg(not(feature="no_clipboard"))]
+fn set_url_to_clipboard<T: Write>(viewer: &StreamViewer<T>, url: String, clipboard_result_string: &mut String) {
+    match viewer.clipbood {
+        Some(true) => {
+            let clipboard_result = set_clipboard(url);
+            
+            match clipboard_result {
+                Ok(_) => {*clipboard_result_string = match viewer.language {
+                    Language::Japanese => format!("{copied}: クリップボードにURLをコピーしました!!\n", copied= viewer.style.copied),
+                    Language::English => format!("{copied}: copied the URL to the clipboard!\n", copied= viewer.style.copied)
+                }},
+                Err(_) => ()
+            }
+        },
+        _ => ()
+    }
+}
+#[cfg(feature="no_clipboard")]
+fn set_url_to_clipboard<T: Write>(_viewer: &StreamViewer<T>, _url: String, _clipboard_result_string: &mut String) {}
 
 impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
     fn start_happy_server(&mut self, hs_server: Result<Server,()>, hs_builder: HappyServerBuilder) -> io::Result<Result<HappyServer, String>> {
@@ -68,14 +100,23 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
                     DEFAULT_HTTP_PORT => format!("http://localhost"),
                     num => format!("http://localhost:{}",num)
                 };
+                // Paste url to clipboard
+                let mut clipboard_result_string = String::new();
+                set_url_to_clipboard(&self, url.clone(), &mut clipboard_result_string);
 
                 let output_message = match self.language{
-                    Language::Japanese => format!("{running}: カレントディレクトリをhttpで配信しています。\n\
+                    Language::Japanese => format!("\
+                    {running}: カレントディレクトリをhttpで配信しています。\n\
                     {url} にアクセスすればブラウズができます。\n\n\
-                    終了する場合は、Ctrl + C を押すか、このウィンドを閉じてください。\n", url=url, running=self.style.running),
-                    Language::English => format!("{running}: The current directory is served by http!!\n\
+                    {clipboard_result_string}\
+                    終了する場合は、Ctrl + C を押すか、このウィンドを閉じてください。\n"
+                    , url=url, running=self.style.running, clipboard_result_string=clipboard_result_string),
+                    Language::English => format!("\
+                    {running}: The current directory is served by http!!\n\
                     You can browse by visiting {url}. \n\n\
-                    To exit, press Ctrl + C or close this window.\n",url=url, running=self.style.running)
+                    {clipboard_result_string}\
+                    To exit, press Ctrl + C or close this window.\n"
+                    , url=url, running=self.style.running, clipboard_result_string=clipboard_result_string)
                 };
                 self.writer.write_all(output_message.as_bytes())?;
 
@@ -117,7 +158,6 @@ impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
                 }
             )
         };
-
         let mut error_output = None;
         let port = match port {
             Ok(p) => Some(p),

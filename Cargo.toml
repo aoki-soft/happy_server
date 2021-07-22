@@ -1,6 +1,6 @@
 [package]
 name = "happy_server"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2018"
 authors = ["aoki <blz.soft@outlook.jp>"]
 repository = "https://github.com/blz-soft/happy_server"
@@ -18,8 +18,8 @@ english = []
 # cli color default
 no_color = []
 
-# viewer type
-cli = []
+# Disable the ability to paste a url to the clipboard
+no_clipboard = []
 
 [dependencies]
 # webserver
@@ -31,6 +31,8 @@ colored = "2"
 tokio = { version = "1", features = ["signal", "rt", "rt-multi-thread"] }
 # Libraries that accept command line arguments
 clap = "2.33"
+# for using the clipboard
+clipboard = "0.5.0"
 
 [dev-dependencies]
 actix-rt = "2.2.0"

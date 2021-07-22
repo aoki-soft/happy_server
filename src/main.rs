@@ -38,7 +38,7 @@ async fn main() {
     // setup cli style strings
     let style = if color {StyledString::colored()} else {StyledString::no_colored()};
     // setup app viewer
-    let mut viewer = StreamViewer{language, style, writer: std::io::stdout()};
+    let mut viewer = StreamViewer{language, style, writer: std::io::stdout(), clipbood: Some(true)};
     // convert model to server builder, then output with viewer
     let server_builder = happy_server_model.to_happy_server_builder(&mut viewer).unwrap_or_else(|_op|{
         // if the output of the viewer is not successful
