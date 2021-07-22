@@ -5,13 +5,14 @@ use actix_files;
 use actix_web::{App, HttpServer, dev::Server};
 use std::net::SocketAddrV4;
 use std::result::Result;
+use std::io;
 
 pub struct HappyServerBuilder{
     pub socket_addr: SocketAddrV4
 }
 
 impl HappyServerBuilder {
-    pub async fn start_server(self, viewer: &mut impl HappyServerViewer) -> Result<HappyServer, String> {
+    pub async fn start_server(self, viewer: &mut impl HappyServerViewer) -> io::Result<Result<HappyServer, String>>{
         let server = Ok(HttpServer::new(|| {
             App::new().service(actix_files::Files::new("/", ".").show_files_listing())
         })
@@ -23,8 +24,8 @@ impl HappyServerBuilder {
 
 
 pub trait HappyServerViewer {
-    fn happy_server_stop(&mut self, hs_server: HappyServer);
-    fn start_happy_server(&mut self, hs_server: Result<Server,()>, hs_builder: HappyServerBuilder) -> Result<HappyServer,String>;
+    fn happy_server_stop(&mut self, hs_server: HappyServer) -> io::Result<()> ;
+    fn start_happy_server(&mut self, hs_server: Result<Server,()>, hs_builder: HappyServerBuilder) -> io::Result<Result<HappyServer, String>>;
 }
 
 
@@ -35,9 +36,9 @@ pub struct HappyServer {
 
 #[allow(dead_code)]
 impl HappyServer {
-    pub async fn stop(self, viewer: &mut impl HappyServerViewer){
+    pub async fn stop(self, viewer: &mut impl HappyServerViewer) -> io::Result<()> {
         self.server.stop(false).await;
-        viewer.happy_server_stop(self);
+        viewer.happy_server_stop(self)
     }
     pub async fn awaiting(self) -> std::io::Result<()>{
         self.server.await

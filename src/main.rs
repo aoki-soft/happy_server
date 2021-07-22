@@ -6,10 +6,9 @@ mod controller;
 mod model;
 
 use viewer::*;
-// use controller::*;
 use actix_web::dev::Server;
-use server_core::{HappyServer, HappyServerBuilder};
-use std::net::{Ipv4Addr};
+use server_core::HappyServer;
+use std::net::Ipv4Addr;
 
 // Compile-time defaults
 #[cfg(any(feature = "japanese",not(feature = "english")))]
@@ -60,11 +59,18 @@ async fn main() {
     let mut viewer = StreamViewer{language, style, writer: std::io::stdout()};
     // convert model to server builder, then output with viewer
     let server_builder = happy_server_model.to_happy_server_builder(&mut viewer).unwrap_or_else(|_op|{
+        // if the output of the viewer is not successful
+        std::process::exit(1)
+    }).unwrap_or_else(|_op|{
         // if there is error cli argument
         std::process::exit(0)
     });
+
     // run happy server and output server start result
     let server = server_builder.start_server(&mut viewer).await.unwrap_or_else(|_op|{
+        // if the output of the viewer is not successful
+        std::process::exit(1)
+    }).unwrap_or_else(|_| {
         // if happy server is not working
         std::process::exit(0)
     });
@@ -76,7 +82,10 @@ async fn main() {
     });
     
     // stop server and output stop server result
-    server.stop(&mut viewer).await;
+    server.stop(&mut viewer).await.unwrap_or_else(|_op|{
+        // if the output of the viewer is not successful
+        std::process::exit(1)
+    });
 }
 
 

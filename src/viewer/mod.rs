@@ -2,14 +2,15 @@
 // Released under the [MIT license](https://github.com/blz-soft/happy_server/blob/main/LICENSE)  
 
 use super::server_core;
-// use super::controller;
 use super::*;
+use super::server_core::HappyServerBuilder;
 
 // Add color to console output
 use colored::*;
+
 use std::result::Result;
 use std::io::Write;
-
+use std::io;
 
 #[allow(dead_code)]
 pub struct StyledString {
@@ -46,7 +47,7 @@ pub struct StreamViewer<T: Write>{
 }
 
 impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
-    fn start_happy_server(&mut self, hs_server: Result<Server,()>, hs_builder: HappyServerBuilder) -> Result<HappyServer, String> {
+    fn start_happy_server(&mut self, hs_server: Result<Server,()>, hs_builder: HappyServerBuilder) -> io::Result<Result<HappyServer, String>> {
         match hs_server {
             Err(_) => {
                 // Output when the web server fails to start.
@@ -54,8 +55,8 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
                     Language::Japanese => format!("{error}: カレントディレクトリをhttpで配信できませんでした。\n", error=self.style.error),
                     Language::English => format!("{error}: The current directory could not be delivered via http.\n", error=self.style.error)
                 };
-                self.writer.write_all(output_message.as_bytes()).unwrap();
-                Err(output_message)
+                self.writer.write_all(output_message.as_bytes())?;
+                Ok(Err(output_message))
             },
             Ok(server) => {
                 // Output when the web server is successfully started.
@@ -73,27 +74,28 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
                     You can browse by visiting {url}. \n\n\
                     To exit, press Ctrl + C or close this window.\n",url=url, running=self.style.running)
                 };
-                self.writer.write_all(output_message.as_bytes()).unwrap();
+                self.writer.write_all(output_message.as_bytes())?;
 
-                Ok(server_core::HappyServer{
+                Ok(Ok(server_core::HappyServer{
                     server: server,
                     hs_builder: hs_builder
-                })
+                }))
             }
         }
     }
 
-    fn happy_server_stop(&mut self, _hs_stop: HappyServer) {
+    fn happy_server_stop(&mut self, _hs_stop: HappyServer) -> io::Result<()> {
         let output_result = match self.language {
             Language::Japanese => format!("{finish}: httpでの配信を終了しました。\n", finish=self.style.finish),
             Language::English => format!("{finish}: Distribution via http has been terminated.\n", finish=self.style.finish)
         };
-        self.writer.write_all(output_result.as_bytes()).unwrap();
+        self.writer.write_all(output_result.as_bytes())?;
+        Ok(())
     }
 }
 
 impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
-    fn to_happy_server_builder(&mut self, model: model::HappyServerModel) -> Result<crate::server_core::HappyServerBuilder, String> {
+    fn to_happy_server_builder(&mut self, model: model::HappyServerModel) -> io::Result<Result<HappyServerBuilder, String>> {
         match self.language {
             Language::Japanese => {
                 // port convert string to u16
@@ -120,14 +122,14 @@ impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
                 };
                 match error_output {
                     Some(e) => {
-                        self.writer.write_all(e.as_bytes()).unwrap();
-                        Err(e)
+                        self.writer.write_all(e.as_bytes())?;
+                        Ok(Err(e))
                     },
                     None => {
                         // output error if there is error
-                        Ok(HappyServerBuilder{
+                        Ok(Ok(HappyServerBuilder{
                             socket_addr: std::net::SocketAddrV4::new(DEFAULT_IPV4_ADDR, port.unwrap())
-                        })
+                        }))
                     }
                 }
             },
@@ -156,14 +158,14 @@ impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
                 
                 match error_output {
                     Some(e) => {
-                        self.writer.write_all(e.as_bytes()).unwrap();
-                        Err(e)
+                        self.writer.write_all(e.as_bytes())?;
+                        Ok(Err(e))
                     },
                     None => {
                         // output error if there is error
-                        Ok(HappyServerBuilder{
+                        Ok(Ok(HappyServerBuilder{
                             socket_addr: std::net::SocketAddrV4::new(DEFAULT_IPV4_ADDR, port.unwrap())
-                        })
+                        }))
                     }
                 }
             }
