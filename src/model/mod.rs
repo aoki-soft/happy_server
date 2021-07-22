@@ -6,11 +6,11 @@ pub struct HappyServerModel {
 }
 
 pub trait HappyServerModelViewer {
-    fn to_happy_server_builder(&self, model: HappyServerModel) -> Result<super::server_core::HappyServerBuilder, String>;
+    fn to_happy_server_builder(&mut self, model: HappyServerModel) -> Result<super::server_core::HappyServerBuilder, String>;
 }
 
 impl HappyServerModel {
-    pub fn to_happy_server_builder(self, viewer: & impl HappyServerModelViewer) -> Result<super::server_core::HappyServerBuilder, String> {
+    pub fn to_happy_server_builder(self, viewer: &mut impl HappyServerModelViewer) -> Result<super::server_core::HappyServerBuilder, String> {
         viewer.to_happy_server_builder(self)
     }
 }

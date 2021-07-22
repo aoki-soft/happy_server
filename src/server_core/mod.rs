@@ -11,7 +11,7 @@ pub struct HappyServerBuilder{
 }
 
 impl HappyServerBuilder {
-    pub async fn start_server(self, viewer: & impl HappyServerViewer) -> Result<HappyServer, String> {
+    pub async fn start_server(self, viewer: &mut impl HappyServerViewer) -> Result<HappyServer, String> {
         let server = Ok(HttpServer::new(|| {
             App::new().service(actix_files::Files::new("/", ".").show_files_listing())
         })
@@ -23,8 +23,8 @@ impl HappyServerBuilder {
 
 
 pub trait HappyServerViewer {
-    fn happy_server_stop(&self, hs_server: HappyServer);
-    fn start_happy_server(&self, hs_server: Result<Server,()>, hs_builder: HappyServerBuilder) -> Result<HappyServer,String>;
+    fn happy_server_stop(&mut self, hs_server: HappyServer);
+    fn start_happy_server(&mut self, hs_server: Result<Server,()>, hs_builder: HappyServerBuilder) -> Result<HappyServer,String>;
 }
 
 
@@ -35,7 +35,7 @@ pub struct HappyServer {
 
 #[allow(dead_code)]
 impl HappyServer {
-    pub async fn stop(self, viewer: & impl HappyServerViewer){
+    pub async fn stop(self, viewer: &mut impl HappyServerViewer){
         self.server.stop(false).await;
         viewer.happy_server_stop(self);
     }
