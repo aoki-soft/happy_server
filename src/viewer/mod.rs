@@ -42,7 +42,7 @@ impl StyledString {
             note: "Note".to_string(),
             running: "Running".to_string(),
             finish: "Finish".to_string(),
-            copied: "Copied".green().bold().to_string(),
+            copied: "Copied".to_string(),
         }
     }
 }
@@ -113,7 +113,7 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
                     , url=url, running=self.style.running, clipboard_result_string=clipboard_result_string),
                     Language::English => format!("\
                     {running}: The current directory is served by http!!\n\
-                    You can browse by visiting {url}. \n\n\
+                    You can browse by visiting {url}\n\n\
                     {clipboard_result_string}\
                     To exit, press Ctrl + C or close this window.\n"
                     , url=url, running=self.style.running, clipboard_result_string=clipboard_result_string)
@@ -131,7 +131,7 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
     fn happy_server_stop(&mut self, _hs_stop: HappyServer) -> io::Result<()> {
         let output_result = match self.language {
             Language::Japanese => format!("{finish}: httpでの配信を終了しました。\n", finish=self.style.finish),
-            Language::English => format!("{finish}: Distribution via http has been terminated.\n", finish=self.style.finish)
+            Language::English => format!("{finish}: Distribution has been terminated.\n", finish=self.style.finish)
         };
         self.writer.write_all(output_result.as_bytes())?;
         Ok(())

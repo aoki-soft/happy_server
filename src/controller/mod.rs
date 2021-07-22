@@ -52,7 +52,7 @@ impl CliArgGetter {
                         .value_name("port_number")
                         .takes_value(true))
                     .arg(Arg::with_name("japanese")
-                        .help("Standard output in Japanese")
+                        .help("Prints output with Japanese")
                         .short("j")
                         .long("japanese"));
 
