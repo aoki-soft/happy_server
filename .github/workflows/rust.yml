@@ -67,30 +67,30 @@ jobs:
       run: mkdir artifacts
 
     - name: Test_no_color
-      run: cargo test --release --features no_color
+      run: cargo test --release --features no_color --features no_clipboard
     - name: Build_no_color
-      run: cargo build --release --features no_color
+      run: cargo build --release --features no_color --features no_clipboard
     - name: copy_artifacts
       run: cp target/release/happy_server artifacts/hs_no_color
 
     - name: Test_english
-      run: cargo test --release --features english
+      run: cargo test --release --features english --features no_clipboard
     - name: Build_english
-      run: cargo build --release --features english
+      run: cargo build --release --features english --features no_clipboard
     - name: copy_artifacts
       run: cp target/release/happy_server artifacts/hs_english
 
     - name: Test_english_no_color
-      run: cargo test --release --features english --features no_color
+      run: cargo test --release --features english --features no_color --features no_clipboard
     - name: Build_english_no_color
-      run: cargo build --release --features english --features no_color
+      run: cargo build --release --features english --features no_color --features no_clipboard
     - name: copy_artifacts
       run: cp target/release/happy_server artifacts/hs_english_no_color
 
     - name: Test_default
-      run: cargo test --release
+      run: cargo test --release --features no_clipboard
     - name: Build_defalut
-      run: cargo build --release
+      run: cargo build --release --features no_clipboard
     - name: copy_artifacts
       run: cp target/release/happy_server artifacts/happy_server
 
@@ -115,30 +115,30 @@ jobs:
       run: mkdir artifacts
 
     - name: Test_no_color
-      run: cargo test --release --features no_color
+      run: cargo test --release --features no_color --features no_clipboard
     - name: Build_no_color
-      run: cargo build --release --features no_color
+      run: cargo build --release --features no_color --features no_clipboard
     - name: copy_artifacts
       run: cp target/release/happy_server artifacts/hs_no_color
 
     - name: Test_english
-      run: cargo test --release --features english
+      run: cargo test --release --features english --features no_clipboard
     - name: Build_english
-      run: cargo build --release --features english
+      run: cargo build --release --features english --features no_clipboard
     - name: copy_artifacts
       run: cp target/release/happy_server artifacts/hs_english
 
     - name: Test_english_no_color
-      run: cargo test --release --features english --features no_color
+      run: cargo test --release --features english --features no_color --features no_clipboard
     - name: Build_english_no_color
-      run: cargo build --release --features english --features no_color
+      run: cargo build --release --features english --features no_color --features no_clipboard
     - name: copy_artifacts
       run: cp target/release/happy_server artifacts/hs_english_no_color
 
     - name: Test_default
-      run: cargo test --release
+      run: cargo test --release --features no_clipboard
     - name: Build_defalut
-      run: cargo build --release
+      run: cargo build --release --features no_clipboard
     - name: copy_artifacts
       run: cp target/release/happy_server artifacts/happy_server
 
