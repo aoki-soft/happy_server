@@ -34,11 +34,11 @@ async fn main() {
     // setup cli arguments getter
     let cli_arg_getter = controller::CliArgGetter{language};
     // get cli arguments
-    let (language, color, happy_server_model) = cli_arg_getter.get_arguments();
+    let (language, color, using_clipboard, happy_server_model) = cli_arg_getter.get_arguments();
     // setup cli style strings
     let style = if color {StyledString::colored()} else {StyledString::no_colored()};
     // setup app viewer
-    let mut viewer = StreamViewer{language, style, writer: std::io::stdout(), clipbood: Some(true)};
+    let mut viewer = StreamViewer{language, style, writer: std::io::stdout(), using_clipboard};
     // convert model to server builder, then output with viewer
     let server_builder = happy_server_model.to_happy_server_builder(&mut viewer).unwrap_or_else(|_op|{
         // if the output of the viewer is not successful

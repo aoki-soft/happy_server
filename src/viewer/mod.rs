@@ -52,7 +52,7 @@ pub struct StreamViewer<T: Write>{
     pub language: Language,
     pub style: StyledString,
     pub writer: T,
-    pub clipbood: Option<bool>,
+    pub using_clipboard: Option<bool>,
 }
 
 #[cfg(not(feature="no_clipboard"))]
@@ -64,7 +64,7 @@ fn set_clipboard(set_string: String) -> Result<(), Box<dyn std::error::Error>> {
 }
 #[cfg(not(feature="no_clipboard"))]
 fn set_url_to_clipboard<T: Write>(viewer: &StreamViewer<T>, url: String, clipboard_result_string: &mut String) {
-    match viewer.clipbood {
+    match viewer.using_clipboard {
         Some(true) => {
             let clipboard_result = set_clipboard(url);
             
