@@ -13,8 +13,6 @@ use std::result::Result;
 use std::io::Write;
 use std::io;
 
-
-const DEFAULT_IPV4_ADDR: Ipv4Addr  = Ipv4Addr::new(0, 0, 0, 0);
 const DEFAULT_HTTP_PORT: u16  = 80;
 
 #[allow(dead_code)]
@@ -46,7 +44,6 @@ impl StyledString {
         }
     }
 }
-
 
 pub struct StreamViewer<T: Write>{
     pub language: Language,
@@ -88,8 +85,8 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
             Err(_) => {
                 // Output when the web server fails to start.
                 let output_message = match self.language{
-                    Language::Japanese => format!("{error}: カレントディレクトリをhttpで配信できませんでした。\n", error=self.style.error),
-                    Language::English => format!("{error}: The current directory could not be delivered via http.\n", error=self.style.error)
+                    Language::Japanese => format!("{error}: httpによる配信を開始できませんでした。。\n", error=self.style.error),
+                    Language::English => format!("{error}: Could not start delivery via http.\n", error=self.style.error)
                 };
                 self.writer.write_all(output_message.as_bytes())?;
                 Ok(Err(output_message))
@@ -106,13 +103,13 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
 
                 let output_message = match self.language{
                     Language::Japanese => format!("\
-                    {running}: カレントディレクトリをhttpで配信しています。\n\
-                    {url} にアクセスすればブラウズができます。\n\n\
+                    {running}: httpでの配信を開始しました。\n\
+                    {url} からブラウズできます。\n\n\
                     {clipboard_result_string}\
                     終了する場合は、Ctrl + C を押すか、このウィンドを閉じてください。\n"
                     , url=url, running=self.style.running, clipboard_result_string=clipboard_result_string),
                     Language::English => format!("\
-                    {running}: The current directory is served by http!!\n\
+                    {running}: Distribution via http is now available!!\n\
                     You can browse by visiting {url}\n\n\
                     {clipboard_result_string}\
                     To exit, press Ctrl + C or close this window.\n"
@@ -138,13 +135,15 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
     }
 }
 
+use super::model::ParameterSource;
+use std::path::PathBuf;
 impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
-    fn to_happy_server_builder(&mut self, port: Result<u16, ParseIntError>) -> io::Result<Result<HappyServerBuilder, String>> {
-        // port convert string to u16
-        let port: Result<u16, String> = match port {
-            Ok(p) => Ok(p),
-            Err(_) => Err(
-                match self.language {
+    fn to_happy_server_builder(&mut self, port: &Result<u16, ParseIntError>, distribution_dir: &ParameterSource<Result<PathBuf, ()>>) -> io::Result<()> {
+        let mut error_output = None;
+        
+        match port {
+            Err(_) => {
+                let err_message = match self.language {
                     Language::Japanese => format!("\
                         {error}: コマンドライン引数のポート番号に、数値以外が入っていました。\n\
                         {note}: 引数には0~65535までの数値を入れることができます。\n\
@@ -155,31 +154,54 @@ impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
                         {note}: The argument can be any number between 0 and 65535.\n\
                         {note}: If no argument is given, the default port: {defalut_port} will be used.\n"
                         , error=self.style.error, note=self.style.note, defalut_port=DEFAULT_HTTP_PORT)
-                }
-            )
-        };
-        let mut error_output = None;
-        let port = match port {
-            Ok(p) => Some(p),
-            Err(e) => {
-                error_output = match error_output {
-                    Some(previous) => Some(format!("{}\n{}", previous, e)),
-                    None => Some(e)
                 };
-                None
+                error_output = match error_output {
+                    Some(prev_error) => Some(format!("{}{}",prev_error, err_message)),
+                    None => Some(err_message)
+                };
+            },
+            _ => ()
+        }
+
+        match distribution_dir {
+            ParameterSource::Default(path) => match path {
+                Err(_) => {
+                    let err_message = match self.language {
+                        Language::Japanese => format!("{error}: カレントディレクトリを特定できませんでした。\n\
+                            {note}: このアプリが環境変数にアクセスできないようになっている可能性があります。\n\
+                            {note}: 可能であれば、配信するディレクトリを変更してアプリを実行してください。\n"
+                            , error=self.style.error, note=self.style.note),
+                        Language::English => format!("{error}: Could not locate the current directory.\n\
+                            {note}: This app may not have access to environment variables. \n\
+                            {note}: If possible, please change the directory to be delivered and run the app.\n"
+                            , error=self.style.error, note=self.style.note),
+                    };
+                    error_output = match error_output {
+                        Some(prev_error) => Some(format!("{}{}",prev_error, err_message)),
+                        None => Some(err_message)
+                    };
+                },
+                _ => ()
+            },
+            ParameterSource::CliArg(path) => match path {
+                Err(_) => {
+                    let err_message = match self.language {
+                        Language::Japanese => format!("{error}: コマンドライン引数の「配信ディレクトリパス」のフォーマットが不正です。\n", error=self.style.error),
+                        Language::English => format!("{error}: The format of the command line argument \"delivery directory path\" is invalid.\n", error=self.style.error),
+                    };
+                    error_output = match error_output {
+                        Some(prev_error) => Some(format!("{}{}",prev_error, err_message)),
+                        None => Some(err_message)
+                    };
+                },
+                _ => ()
             }
         };
 
+        // Print any error messages.
         match error_output {
-            Some(e) => {
-                self.writer.write_all(e.as_bytes())?;
-                Ok(Err(e))
-            },
-            None => {
-                Ok(Ok(HappyServerBuilder{
-                    socket_addr: std::net::SocketAddrV4::new(DEFAULT_IPV4_ADDR, port.unwrap())
-                }))
-            }
+            Some(e) => self.writer.write_all(e.as_bytes()),
+            None => Ok(())
         }
     }
 }
