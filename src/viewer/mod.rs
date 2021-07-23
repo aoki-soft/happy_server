@@ -8,7 +8,6 @@ use super::server_core::HappyServerBuilder;
 // Add color to console output
 use colored::*;
 
-use std::num::ParseIntError;
 use std::result::Result;
 use std::io::Write;
 use std::io;
@@ -94,8 +93,8 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
             Ok(server) => {
                 // Output when the web server is successfully started.
                 let url = match hs_builder.socket_addr.port() {
-                    DEFAULT_HTTP_PORT => format!("http://localhost"),
-                    num => format!("http://localhost:{}",num)
+                    DEFAULT_HTTP_PORT => format!("http://localhost/{}", hs_builder.uri_prefix),
+                    num => format!("http://localhost:{}/{}",num, hs_builder.uri_prefix)
                 };
                 // Paste url to clipboard
                 let mut clipboard_result_string = String::new();
@@ -136,12 +135,13 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
 }
 
 use super::model::ParameterSource;
-use std::path::PathBuf;
+use super::model::HappyServerPreModel;
+
 impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
-    fn to_happy_server_builder(&mut self, port: &Result<u16, ParseIntError>, distribution_dir: &ParameterSource<Result<PathBuf, ()>>) -> io::Result<()> {
+    fn to_happy_server_builder(&mut self, model: &HappyServerPreModel) -> io::Result<()> {
         let mut error_output = None;
         
-        match port {
+        match model.port {
             Err(_) => {
                 let err_message = match self.language {
                     Language::Japanese => format!("\
@@ -163,7 +163,7 @@ impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
             _ => ()
         }
 
-        match distribution_dir {
+        match &model.distribution_dir {
             ParameterSource::Default(path) => match path {
                 Err(_) => {
                     let err_message = match self.language {
@@ -196,6 +196,27 @@ impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
                 },
                 _ => ()
             }
+        };
+
+        match &model.uri_prefix {
+            ParameterSource::CliArg(uri_prefix) => match uri_prefix {
+                Ok(_) => (),
+                Err(_) => {
+                    let err_message = match self.language {
+                        Language::Japanese => format!("{error}: コマンドライン引数の「配信uriの指定」の値が不正です。\n\
+                        {note}: URIに使用できる文字を使ってください。\n\
+                        {note}: 最初に\"/\"を入れられません。また、\"//\"を入れることができません。\n", error=self.style.error, note=self.style.note),
+                        Language::English => format!("{error}: The value of the URI setting in the command line argument is invalid.\n\
+                        {note}: Please use characters that can be used for URIs.\n\
+                        {note}: You can't put \"/\" at the beginning. You also cannot enter \"//\"\n", error=self.style.error, note=self.style.note),
+                    };
+                    error_output = match error_output {
+                        Some(prev_error) => Some(format!("{}{}",prev_error, err_message)),
+                        None => Some(err_message)
+                    };
+                }
+            },
+            ParameterSource::Default(_) => (),
         };
 
         // Print any error messages.

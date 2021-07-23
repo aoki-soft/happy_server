@@ -22,6 +22,15 @@ impl CliArgGetter {
             .long("port")
             .value_name("port_number")
             .takes_value(true))
+        .arg(Arg::with_name("uri_prefix")
+            .help(match self.language {
+                Language::Japanese => "配信uriの指定 ... https://localhost/〇〇/index.html の〇〇の部分です。",
+                Language::English => "Specifies the prefix of the delivery uri.",
+            })
+            .short("u")
+            .long("uri_prefix")
+            .value_name("uri prefix")
+            .takes_value(true))
         .arg(Arg::with_name("distribution_dir")
             .help(match self.language {
                 Language::Japanese => "配信ディレクトリの指定",
@@ -111,7 +120,11 @@ impl CliArgGetter {
                 distribution_dir: match matches.value_of_lossy("distribution_dir") {
                     Some(path) => Some(path.to_string()),
                     None => None
-                }
+                },
+                uri_prefix: match matches.value_of_lossy("uri_prefix"){
+                    Some(uri_prefix) => Some(uri_prefix.to_string()),
+                    None => None
+                },
             }
         )
     }
