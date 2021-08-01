@@ -85,6 +85,7 @@ impl HappyServerModel {
                         socket_addr: std::net::SocketAddrV4::new(DEFAULT_IPV4_ADDR, port),
                         distribution_dir: path,
                         uri_prefix: uri_prefix,
+                        ssl: None,
                     }
                 ),
                 _ => Err(())

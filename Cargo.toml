@@ -1,6 +1,6 @@
 [package]
 name = "happy_server"
-version = "0.1.9"
+version = "0.1.10"
 edition = "2018"
 authors = ["aoki <blz.soft@outlook.jp>"]
 repository = "https://github.com/blz-soft/happy_server"
@@ -21,9 +21,13 @@ no_color = []
 # Disable the ability to paste a url to the clipboard
 no_clipboard = []
 
+no_ssl = []
+
 [dependencies]
 # webserver
-actix-web = "3"
+actix-web = { version = "3", features = ["rustls"] }
+# tls library
+rustls = "0.18"
 # static file webserver
 actix-files = "0.5.0" 
 # Add color to console output

@@ -8,26 +8,76 @@ use std::result::Result;
 use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::io::BufRead;
 
 pub struct HappyServerBuilder{
     pub socket_addr: SocketAddrV4,
     pub distribution_dir: PathBuf,
     pub uri_prefix: String,
+    pub ssl: Option<Ssl>,
+}
+pub struct Ssl {
+    pub server_crt: Box<dyn BufRead>,
+    pub server_key: Box<dyn BufRead>,
 }
 
-impl HappyServerBuilder {
-    pub async fn start_server(self, viewer: &mut impl HappyServerViewer) -> io::Result<Result<HappyServer, String>>{
-        let distribution_dir = Arc::new(self.distribution_dir.clone());
-        let uri_prefix = Arc::new(self.uri_prefix.clone());
-        let server = Ok(HttpServer::new(move|| {
-            App::new().service(actix_files::Files::new(&uri_prefix, &*distribution_dir).show_files_listing())
-        })
-        .bind(&self.socket_addr).unwrap()
-        .run());
-        viewer.start_happy_server(server, self)
+#[cfg(feature="no_ssl")]
+fn start_server(builder: HappyServer) -> Result<Server, ()> {
+    match builder.ssl.as_mut() {
+        Some(ssl) => {
+            Err(())
+        }
+        None=> {
+            let distribution_dir = Arc::new(builder.distribution_dir.clone());
+            let uri_prefix = Arc::new(builder.uri_prefix.clone());
+            let server = Ok(HttpServer::new(move|| {
+                App::new().service(actix_files::Files::new(&uri_prefix, &*distribution_dir).show_files_listing())
+            })
+            .bind(&builder.socket_addr).unwrap()
+            .run());
+            server
+        }
+    }
+}
+#[cfg(not(feature="no_ssl"))]
+fn start_server(builder: &mut HappyServerBuilder) -> Result<Server, ()> {
+    match builder.ssl.as_mut() {
+        Some(ssl) => {
+            let certs = rustls::internal::pemfile::certs(&mut ssl.server_crt).unwrap();
+            let mut keys = rustls::internal::pemfile::pkcs8_private_keys(&mut ssl.server_key).unwrap();
+            let mut cfg = rustls::ServerConfig::new(rustls::NoClientAuth::new());
+            cfg.set_single_cert(certs, keys.remove(0)).unwrap();
+            cfg.set_protocols(&[b"h2".to_vec(), b"http/1.1".to_vec()]);
+
+            let distribution_dir = Arc::new(builder.distribution_dir.clone());
+            let uri_prefix = Arc::new(builder.uri_prefix.clone());
+
+            let server = Ok(HttpServer::new(move|| {
+                App::new().service(actix_files::Files::new(&uri_prefix, &*distribution_dir).show_files_listing())
+            })
+            .bind_rustls(&builder.socket_addr, cfg).unwrap()
+            .run());
+            server
+        }
+        None=> {
+            let distribution_dir = Arc::new(builder.distribution_dir.clone());
+            let uri_prefix = Arc::new(builder.uri_prefix.clone());
+            let server = Ok(HttpServer::new(move|| {
+                App::new().service(actix_files::Files::new(&uri_prefix, &*distribution_dir).show_files_listing())
+            })
+            .bind(&builder.socket_addr).unwrap()
+            .run());
+            server
+        }
     }
 }
 
+impl HappyServerBuilder {
+    pub async fn start_server(mut self, viewer: &mut impl HappyServerViewer) -> io::Result<Result<HappyServer, String>>{
+        let server = start_server(&mut self);
+        return viewer.start_happy_server(server, self);
+    }
+}
 
 
 pub trait HappyServerViewer {
