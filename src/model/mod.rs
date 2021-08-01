@@ -32,7 +32,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 pub trait HappyServerModelViewer {
-    fn to_happy_server_builder(&mut self, model: & HappyServerPreModel) -> io::Result<()>;
+    fn output_server_pre_model(&mut self, model: & HappyServerPreModel) -> io::Result<()>;
 }
 
 pub struct HappyServerPreModel {
@@ -45,9 +45,8 @@ impl HappyServerModel {
     /// # Form incomplete parameters.
     /// Process the incomplete set of server parameters by putting in default values, etc., so that the server can be started.
     /// If the values are not enough, use the viewer in the argument to display errors, etc.
-    pub fn to_happy_server_builder(self, viewer: &mut impl HappyServerModelViewer) -> (io::Result<()>, Result<HappyServerBuilder, ()>) {
-        
-        let model = HappyServerPreModel {
+    pub fn to_server_pre_medel(self) -> HappyServerPreModel  {
+        HappyServerPreModel {
             port: match self.port {
                 Some(port) => port.parse::<u16>(),
                 None => Ok(u16::into(DEFAULT_HTTP_PORT))
@@ -74,23 +73,22 @@ impl HappyServerModel {
                 },
                 None => ParameterSource::Default(Ok("".to_string())),
             }
-        };
-
-        let output_result = viewer.to_happy_server_builder(&model);
-
-        let happy_server_builder_result = 
-            match (model.port, model.distribution_dir.get_contents(), model.uri_prefix.get_contents()) {
-                (Ok(port), Ok(path), Ok(uri_prefix)) => Ok(
-                    HappyServerBuilder{
-                        socket_addr: std::net::SocketAddrV4::new(DEFAULT_IPV4_ADDR, port),
-                        distribution_dir: path,
-                        uri_prefix: uri_prefix,
-                        ssl: None,
-                    }
-                ),
-                _ => Err(())
-        };
-
-        (output_result, happy_server_builder_result)
+        }
     }
 }
+impl HappyServerPreModel {
+    pub fn to_server_builder(self) -> Result<HappyServerBuilder, ()> {
+        match (self.port, self.distribution_dir.get_contents(), self.uri_prefix.get_contents()) {
+            (Ok(port), Ok(path), Ok(uri_prefix)) => Ok(
+                HappyServerBuilder{
+                    socket_addr: std::net::SocketAddrV4::new(DEFAULT_IPV4_ADDR, port),
+                    distribution_dir: path,
+                    uri_prefix: uri_prefix,
+                    ssl: None,
+                }
+            ),
+            _ => Err(())
+        }
+    }
+}
+

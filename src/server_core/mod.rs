@@ -73,16 +73,15 @@ fn start_server(builder: &mut HappyServerBuilder) -> Result<Server, ()> {
 }
 
 impl HappyServerBuilder {
-    pub async fn start_server(mut self, viewer: &mut impl HappyServerViewer) -> io::Result<Result<HappyServer, String>>{
-        let server = start_server(&mut self);
-        return viewer.start_happy_server(server, self);
+    pub async fn start_server(&mut self) -> Result<Server,()> {
+        start_server(self)
     }
 }
 
 
 pub trait HappyServerViewer {
-    fn happy_server_stop(&mut self, hs_server: HappyServer) -> io::Result<()> ;
-    fn start_happy_server(&mut self, hs_server: Result<Server,()>, hs_builder: HappyServerBuilder) -> io::Result<Result<HappyServer, String>>;
+    fn output_start_server(&mut self, hs_server: &Result<Server, ()>, hs_builder: &HappyServerBuilder) -> io::Result<()>;
+    fn output_server_stop(&mut self, hs_server: &HappyServer) -> io::Result<()>;
 }
 
 
@@ -93,9 +92,8 @@ pub struct HappyServer {
 
 #[allow(dead_code)]
 impl HappyServer {
-    pub async fn stop(self, viewer: &mut impl HappyServerViewer) -> io::Result<()> {
+    pub async fn stop(& self) {
         self.server.stop(false).await;
-        viewer.happy_server_stop(self)
     }
     pub async fn awaiting(self) -> std::io::Result<()>{
         self.server.await

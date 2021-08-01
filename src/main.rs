@@ -5,9 +5,10 @@ mod viewer;
 mod controller;
 mod model;
 
+use model::HappyServerModelViewer;
 use viewer::*;
 use actix_web::dev::Server;
-use server_core::HappyServer;
+use server_core::{HappyServer, HappyServerViewer};
 
 // Compile-time defaults
 #[cfg(any(feature = "japanese",not(feature = "english")))]
@@ -39,24 +40,28 @@ async fn main() {
     // setup app viewer
     let mut viewer = StreamViewer{language, style, writer: std::io::stdout(), using_clipboard};
     // convert model to server builder, then output with viewer
-    let (viewer_output_result , server_builder_result) = happy_server_model.to_happy_server_builder(&mut viewer);
-    viewer_output_result.unwrap_or_else(|_op|{
+    let server_pre_model = happy_server_model.to_server_pre_medel();
+    viewer.output_server_pre_model(&server_pre_model).unwrap_or_else(|_op|{
         // if the output of the viewer is not successful
         std::process::exit(1)
     });
-    let server_builder = server_builder_result.unwrap_or_else(|_op|{
+    let mut server_builder = server_pre_model.to_server_builder().unwrap_or_else(|_op|{
         // if there is error cli argument
         std::process::exit(0)
     });
 
     // run happy server and output server start result
-    let server = server_builder.start_server(&mut viewer).await.unwrap_or_else(|_op|{
+    let start_server = server_builder.start_server().await;
+    viewer.output_start_server(&start_server, &server_builder).unwrap_or_else(|_op|{
         // if the output of the viewer is not successful
         std::process::exit(1)
-    }).unwrap_or_else(|_| {
+    });
+    let server = start_server.unwrap_or_else(|_| {
         // if happy server is not working
         std::process::exit(0)
     });
+
+    let server = HappyServer{server, hs_builder: server_builder};
 
     // wait finish signal
     let rt = tokio::runtime::Runtime::new().unwrap();
@@ -65,7 +70,8 @@ async fn main() {
     });
     
     // stop server and output stop server result
-    server.stop(&mut viewer).await.unwrap_or_else(|_op|{
+    server.stop().await;
+    viewer.output_server_stop(&server).unwrap_or_else(|_op|{
         // if the output of the viewer is not successful
         std::process::exit(1)
     });

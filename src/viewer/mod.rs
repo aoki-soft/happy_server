@@ -79,7 +79,7 @@ fn set_url_to_clipboard<T: Write>(viewer: &StreamViewer<T>, url: String, clipboa
 fn set_url_to_clipboard<T: Write>(_viewer: &StreamViewer<T>, _url: String, _clipboard_result_string: &mut String) {}
 
 impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
-    fn start_happy_server(&mut self, hs_server: Result<Server,()>, hs_builder: HappyServerBuilder) -> io::Result<Result<HappyServer, String>> {
+    fn output_start_server(&mut self, hs_server: &Result<Server, ()>, hs_builder: &HappyServerBuilder) -> io::Result<()> {
         match hs_server {
             Err(_) => {
                 // Output when the web server fails to start.
@@ -88,9 +88,9 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
                     Language::English => format!("{error}: Could not start delivery via http.\n", error=self.style.error)
                 };
                 self.writer.write_all(output_message.as_bytes())?;
-                Ok(Err(output_message))
+                Ok(())
             },
-            Ok(server) => {
+            Ok(_server) => {
                 // Output when the web server is successfully started.
                 let url = match hs_builder.socket_addr.port() {
                     DEFAULT_HTTP_PORT => format!("http://localhost/{}", hs_builder.uri_prefix),
@@ -115,16 +115,12 @@ impl<T: Write> server_core::HappyServerViewer for StreamViewer<T> {
                     , url=url, running=self.style.running, clipboard_result_string=clipboard_result_string)
                 };
                 self.writer.write_all(output_message.as_bytes())?;
-
-                Ok(Ok(server_core::HappyServer{
-                    server: server,
-                    hs_builder: hs_builder
-                }))
+                Ok(())
             }
         }
     }
 
-    fn happy_server_stop(&mut self, _hs_stop: HappyServer) -> io::Result<()> {
+    fn output_server_stop(&mut self, _hs_stop: &HappyServer) -> io::Result<()> {
         let output_result = match self.language {
             Language::Japanese => format!("{finish}: httpでの配信を終了しました。\n", finish=self.style.finish),
             Language::English => format!("{finish}: Distribution has been terminated.\n", finish=self.style.finish)
@@ -138,7 +134,7 @@ use super::model::ParameterSource;
 use super::model::HappyServerPreModel;
 
 impl<T: Write> super::model::HappyServerModelViewer for StreamViewer<T> {
-    fn to_happy_server_builder(&mut self, model: &HappyServerPreModel) -> io::Result<()> {
+    fn output_server_pre_model(&mut self, model: & HappyServerPreModel) -> io::Result<()> {
         let mut error_output = None;
         
         match model.port {
